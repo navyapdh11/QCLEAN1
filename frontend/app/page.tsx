@@ -1,6 +1,10 @@
+import ParticleBackground from '@/components/ParticleBackground';
+
 export default function Home() {
   return (
-    <main className="max-w-7xl mx-auto px-4 py-12">
+    <>
+      <ParticleBackground />
+      <main className="max-w-7xl mx-auto px-4 py-12 relative">
       <section className="text-center mb-16">
         <h1 className="text-5xl font-bold mb-4">Professional Cleaning Services Across Australia</h1>
         <p className="text-xl text-gray-600 mb-8">
@@ -37,5 +41,6 @@ export default function Home() {
         </div>
       </section>
     </main>
+    </>
   );
 }
