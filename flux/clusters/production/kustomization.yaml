@@ -1,0 +1,28 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: primeclean-infra
+  namespace: primeclean
+spec:
+  interval: 10m0s
+  path: ./flux/infrastructure
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  wait: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: primeclean-apps
+  namespace: primeclean
+spec:
+  interval: 5m0s
+  path: ./flux/releases
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: primeclean-infra

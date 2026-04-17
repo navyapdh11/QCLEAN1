@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: primeclean
+  labels:
+    name: primeclean
+    monitoring: enabled

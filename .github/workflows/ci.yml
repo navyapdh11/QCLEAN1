@@ -1,0 +1,102 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install Frontend Dependencies
+        run: cd frontend && npm ci
+      
+      - name: Lint Frontend
+        run: cd frontend && npm run lint
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install Booking Service Dependencies
+        run: pip install -r booking-service/requirements.txt
+      
+      - name: Install RAG Service Dependencies
+        run: pip install -r rag-service/requirements.txt
+      
+      - name: Lint Booking Service
+        run: |
+          pip install ruff mypy
+          cd booking-service
+          ruff check app/
+          mypy app/
+      
+      - name: Lint RAG Service
+        run: |
+          cd rag-service
+          ruff check app/
+          mypy app/
+
+  build-and-push:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build and push Booking Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./booking-service
+          push: true
+          tags: ghcr.io/${{ github.repository }}/booking-service:${{ github.sha }}
+      
+      - name: Build and push RAG Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./rag-service
+          push: true
+          tags: ghcr.io/${{ github.repository }}/rag-service:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.0'
+      
+      - name: Configure Kubeconfig
+        run: echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+      
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/booking-service booking=ghcr.io/${{ github.repository }}/booking-service:${{ github.sha }} -n primeclean
+          kubectl set image deployment/rag-service rag=ghcr.io/${{ github.repository }}/rag-service:${{ github.sha }} -n primeclean
+          flux reconcile kustomization primeclean-apps

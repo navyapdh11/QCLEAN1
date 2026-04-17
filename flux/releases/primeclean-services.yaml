@@ -1,0 +1,65 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: booking-service
+  namespace: primeclean
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: ./charts/booking-service
+      sourceRef:
+        kind: GitRepository
+        name: flux-system
+  values:
+    replicaCount: 2
+    image:
+      repository: ghcr.io/primeclean/booking-service
+      tag: "latest"
+    service:
+      type: ClusterIP
+      port: 8000
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+    env:
+      - name: ALLOWED_ORIGIN
+        value: "https://primeclean.com.au"
+      - name: NEXT_PUBLIC_URL
+        value: "https://primeclean.com.au"
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: rag-service
+  namespace: primeclean
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: ./charts/rag-service
+      sourceRef:
+        kind: GitRepository
+        name: flux-system
+  values:
+    replicaCount: 2
+    image:
+      repository: ghcr.io/primeclean/rag-service
+      tag: "latest"
+    service:
+      type: ClusterIP
+      port: 8001
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+    env:
+      - name: ALLOWED_ORIGIN
+        value: "https://primeclean.com.au"
