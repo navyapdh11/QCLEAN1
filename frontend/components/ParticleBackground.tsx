@@ -58,7 +58,7 @@ function ParticleSwarm({
   color?: string;
   rotationSpeed?: [number, number];
 }) {
-  const ref = useRef<THREE.Group>(null);
+  const pointsRef = useRef<THREE.Points>(null);
   const { invalidate } = useThree();
 
   const sphere = useMemo(() => {
@@ -68,9 +68,9 @@ function ParticleSwarm({
   }, [particleCount]);
 
   useFrame((state, delta) => {
-    if (!ref.current) return;
-    ref.current.rotation.x -= delta * rotationSpeed[0];
-    ref.current.rotation.y -= delta * rotationSpeed[1];
+    if (!pointsRef.current) return;
+    pointsRef.current.rotation.x -= delta * rotationSpeed[0];
+    pointsRef.current.rotation.y -= delta * rotationSpeed[1];
     // On-demand rendering for performance
     invalidate();
   });
@@ -78,7 +78,7 @@ function ParticleSwarm({
   return (
     <group rotation={[0, 0, Math.PI / 4]}>
       <Points
-        ref={ref}
+        ref={pointsRef}
         positions={sphere}
         stride={3}
         frustumCulled={true}
