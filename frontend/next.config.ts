@@ -5,14 +5,16 @@ const nextConfig = {
     domains: ['primeclean.com.au'],
   },
   async rewrites() {
+    const bookingUrl = process.env.BOOKING_SERVICE_URL || 'http://localhost:8000';
+    const ragUrl = process.env.RAG_SERVICE_URL || 'http://localhost:8001';
     return [
       {
         source: '/api/booking/:path*',
-        destination: `${process.env.BOOKING_SERVICE_URL}/:path*`,
+        destination: `${bookingUrl}/:path*`,
       },
       {
         source: '/api/rag/:path*',
-        destination: `${process.env.RAG_SERVICE_URL}/:path*`,
+        destination: `${ragUrl}/:path*`,
       },
     ];
   },
